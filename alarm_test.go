@@ -11,8 +11,8 @@ func TestAlarmSerialize(t *testing.T) {
 	expectedTrigger := time.Hour*3 + time.Minute*23 + time.Second*58
 	expected := ICalAlarmHeader + "\n" +
 		"ACTION:" + expectedAction + "\n" +
-		"DESCRIPTION:" + expectedDescription + "\n" +
 		"TRIGGER:-PT3H24M" + "\n" +
+		"DESCRIPTION:" + expectedDescription + "\n" +
 		ICalAlarmFooter
 	alarm := Alarm{
 		Action:      expectedAction,
