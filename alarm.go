@@ -49,7 +49,7 @@ func (alarm *Alarm) Serialize() string {
 		d := alarm.Trigger.Round(time.Minute).Minutes()
 		minutes := math.Mod(d, 60)
 		hours := (d - minutes) / 60
-		triggerString := fmt.Sprintf("TRIGGER:-%vH%vM", hours, minutes)
+		triggerString := fmt.Sprintf("TRIGGER:-PT%vH%vM", hours, minutes)
 		a += triggerString + "\n"
 	}
 
