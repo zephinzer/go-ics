@@ -2,6 +2,7 @@ package ics
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/google/uuid"
 )
@@ -11,51 +12,56 @@ const ICalEventFooter = "END:VEVENT"
 
 // Event (https://icalendar.org/iCalendar-RFC-5545/3-6-1-event-component.html)
 type Event struct {
-	UID            string    `json:"uid"`
-	Title          string    `json:"title"`
-	Summary        string    `json:"summary"`     // https://icalendar.org/iCalendar-RFC-5545/3-8-1-12-summary.html
-	Description    string    `json:"description"` // https://icalendar.org/iCalendar-RFC-5545/3-8-1-5-description.html
-	URL            string    `json:"url"`
-	Categories     []string  `json:"categories"`
-	Status         string    `json:"status"`
-	Organizer      Person    `json:"organizer"`
-	Location       Location  `json:"geo"`
-	Timestamp      Timestamp `json:"timestamp"`
-	Sequence       int       `json:"sequence"`
-	RecurrenceRule string    `json:"recurrence_rule"`
+	UID            *UID            `json:"uid"`
+	Title          string          `json:"title" ics:"TITLE:"`
+	Summary        string          `json:"summary" ics:"SUMMARY:"`         // https://icalendar.org/iCalendar-RFC-5545/3-8-1-12-summary.html
+	Description    string          `json:"description" ics:"DESCRIPTION:"` // https://icalendar.org/iCalendar-RFC-5545/3-8-1-5-description.html
+	URL            string          `json:"url" ics:"URL"`
+	Categories     []string        `json:"categories"`
+	Status         string          `json:"status"`
+	Sequence       int             `json:"sequence" ics:"SEQUENCE"`
+	Organizer      Person          `json:"organizer"`
+	Location       Location        `json:"geo"`
+	Timestamp      Timestamp       `json:"timestamp"`
+	RecurrenceRule *RecurrenceRule `json:"recurrence_rule"`
 }
 
 func (event *Event) Serialize() string {
+	eventType := reflect.TypeOf(Event{})
 	e := ICalEventHeader + "\n"
 
 	// UID generation
-	if len(event.UID) == 0 {
-		event.UID = uuid.New().String()
+	if event.UID == nil {
+		event.UID = &UID{Value: uuid.New().String()}
 	}
-	e += "UID:" + event.UID + "\n"
+	e += event.UID.String() + "\n"
 
 	// Title
 	if len(event.Title) > 0 {
-		e += "TITLE:" + event.Title
+		titleField, _ := eventType.FieldByName("Title")
+		e += fmt.Sprintf("%s:%s\n", titleField.Tag.Get("ics"), event.Title)
 	}
 
 	// Summary
 	if len(event.Summary) > 0 {
-		e += "SUMMARY:" + event.Summary
+		summaryField, _ := eventType.FieldByName("Summary")
+		e += fmt.Sprintf("%s:%s\n", summaryField.Tag.Get("ics"), event.Summary)
 	}
 
 	// Description
 	if len(event.Description) > 0 {
-		e += "DESCRIPTION:" + event.Description
-	}
-
-	// Summary
-	if len(event.Summary) > 0 {
-		e += "SUMMARY:" + event.Summary
+		descriptionField, _ := eventType.FieldByName("Description")
+		e += fmt.Sprintf("%s:%s\n", descriptionField.Tag.Get("ics"), event.Description)
 	}
 
 	// Sequence
-	e += "SEQUENCE:" + fmt.Sprintf("%v", event.Sequence) + "\n"
+	sequenceField, _ := eventType.FieldByName("Sequence")
+	e += fmt.Sprintf("%s:%v", sequenceField.Tag.Get("ics"), event.Sequence) + "\n"
+
+	// RecurrenceRule
+	if event.RecurrenceRule != nil {
+		e += event.RecurrenceRule.String() + "\n"
+	}
 
 	e += ICalEventFooter + "\n"
 	return e
